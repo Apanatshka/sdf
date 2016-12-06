@@ -177,7 +177,7 @@ object M[m'] {
   lexsort-to-scala-decl(|pkg-base*):
     s ->
 $[// Define implicit conversions (e.g. in the package object) to another representation you prefer
- case class S[s](string: java.lang.String, origin: scalaterms.Origin) extends sdf.Lexical {
+ case class S[s](string: java.lang.String)(val origin: scalaterms.Origin) extends sdf.Lexical {
    override def toSTerm: STerm.String = STerm.String(string, scala.Some(origin))
  }]
   with pkg := <separate-by(|".");concat-strings> [pkg-base*, "lexicals"]
@@ -193,7 +193,7 @@ $[// Define implicit conversions (e.g. in the package object) to another represe
 $<object S<sort> extends scalaterms.TermLikeCompanion[S<sort>] {
     override val fromSTerm: scalaterms.FromSTerm[S<sort>] = new scalaterms.FromSTerm[S<sort>] {
       override def unapply(term: STerm): Option[S<sort>] = term match {
-        <$[case STerm.String(string, scala.Some(origin)) => scala.Some(S[sort](string, origin))
+        <$[case STerm.String(string, scala.Some(origin)) => scala.Some(S[sort](string)(origin))
            case _ => scala.None]>
       }
     }
@@ -240,14 +240,14 @@ $<object S<sort> extends scalaterms.TermLikeCompanion[S<sort>] {
 
   cons-to-scala-decl:
     (c, t) ->
-$<case class <cn>(<fields>) extends S<super> {
+$<case class <cn>(<fields>)(val origin: scalaterms.Origin) extends S<super> {
     override def toSTerm = STerm.Cons("<c>", scala.Seq(<recurseFields>), scala.Some(origin))
   }
   object <cn> extends scalaterms.TermLikeCompanion[<cn>] {
     override val fromSTerm: scalaterms.FromSTerm[<cn>] = new scalaterms.FromSTerm[<cn>] {
       override def unapply(term: STerm): Option[<cn>] = term match {
         <$[case STerm.Cons("[c]", scala.Seq([match]), scala.Some(origin)) =>
-             scala.Some([cn]([build]))
+             scala.Some([cn]([build])(origin))
            case _ => None]>
       }
     }
@@ -255,8 +255,6 @@ $<case class <cn>(<fields>) extends S<super> {
     with FunType(inputs, ConstType(SortNoArgs(super))) := t
        ; cn := $[[c][<length> inputs]]
        ; fields := <map-with-index(type-to-scala-field)
-                   ;![<id>, ["origin: scalaterms.Origin"]]
-                   ;concat
                    ;separate-by(|", ")
                    ;concat-strings> inputs
        ; recurseFields := <map-with-index(!$[[<type-to-scala-name>].toSTerm])
@@ -266,8 +264,6 @@ $<case class <cn>(<fields>) extends S<super> {
                   ;separate-by(|", ")
                   ;concat-strings> inputs
        ; build := <map-with-index(type-to-scala-name)
-                  ;![<id>, ["origin"]]
-                  ;concat
                   ;separate-by(|", ")
                   ;concat-strings> inputs
 
